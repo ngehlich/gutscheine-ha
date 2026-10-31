@@ -32,6 +32,14 @@ add:
     code:
       selector:
         text:
+    code_type:
+      selector:
+        select:
+          translation_key: code_type
+          options:
+            - barcode
+            - qr
+            - text
     pin:
       selector:
         text:
@@ -81,6 +89,14 @@ update:
     code:
       selector:
         text:
+    code_type:
+      selector:
+        select:
+          translation_key: code_type
+          options:
+            - barcode
+            - qr
+            - text
     pin:
       selector:
         text:

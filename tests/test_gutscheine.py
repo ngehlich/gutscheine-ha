@@ -33,7 +33,7 @@ async def test_lifecycle(hass: HomeAssistant, hass_ws_client) -> None:
     mm = r["voucher"]
     await _call(hass, "add", shop="Media Markt", value=15)
     await _call(hass, "add", shop="Bauhaus", value=7, expires="2020-05-20")
-    await _call(hass, "add", shop="Conrad")
+    await _call(hass, "add", shop="Conrad", code="https://conrad.de/g/123", code_type="qr")
     await hass.async_block_till_done()
 
     s = hass.states.get("sensor.gutschein_media_markt")
@@ -41,7 +41,9 @@ async def test_lifecycle(hass: HomeAssistant, hass_ws_client) -> None:
     assert s.attributes["status"] == "bald"
     assert s.attributes["code"] == "5303452585670"
     assert hass.states.get("sensor.gutschein_media_markt_2").state == "15.0"
-    assert hass.states.get("sensor.gutschein_conrad").state == "unknown"
+    conrad = hass.states.get("sensor.gutschein_conrad")
+    assert conrad.state == "unknown"
+    assert conrad.attributes["code_typ"] == "qr"
 
     total = hass.states.get("sensor.gutscheine_gesamtwert")
     assert float(total.state) == 45  # Bauhaus abgelaufen, Conrad ohne Betrag

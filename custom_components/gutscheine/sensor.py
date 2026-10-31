@@ -127,6 +127,7 @@ class VoucherSensor(_Base):
             "tage_bis_ablauf": days_left(v),
             "besitzer": v.get("owner"),
             "code": v.get("code"),
+            "code_typ": v.get("code_type"),
             "pin": v.get("pin"),
             "art": v.get("kind"),
             "notiz": v.get("note"),

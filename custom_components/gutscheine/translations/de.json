@@ -40,6 +40,10 @@
           "name": "Code",
           "description": "Gutschein- oder Kartennummer; wird in der App als Barcode angezeigt."
         },
+        "code_type": {
+          "name": "Code-Darstellung",
+          "description": "Wie der Code in der App angezeigt wird: Barcode, QR-Code oder nur als Text. Leer = automatisch."
+        },
         "pin": {
           "name": "PIN",
           "description": "PIN oder Prüfcode, falls vorhanden."
@@ -85,6 +89,10 @@
         "code": {
           "name": "Code",
           "description": "Gutschein- oder Kartennummer; wird in der App als Barcode angezeigt."
+        },
+        "code_type": {
+          "name": "Code-Darstellung",
+          "description": "Wie der Code in der App angezeigt wird: Barcode, QR-Code oder nur als Text. Leer = automatisch."
         },
         "pin": {
           "name": "PIN",
@@ -135,6 +143,15 @@
     "list": {
       "name": "Gutscheine auflisten",
       "description": "Gibt alle Gutscheine zurück."
+    }
+  },
+  "selector": {
+    "code_type": {
+      "options": {
+        "barcode": "Barcode",
+        "qr": "QR-Code",
+        "text": "Nur Text"
+      }
     }
   }
 }

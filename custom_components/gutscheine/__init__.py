@@ -39,7 +39,7 @@ from .const import (
     STATIC_URL,
     VERSION,
 )
-from .store import VoucherStore
+from .store import CODE_TYPES, VoucherStore
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -57,6 +57,7 @@ FIELDS = {
     vol.Optional("expires"): _date,
     vol.Optional("owner"): _text,
     vol.Optional("code"): _text,
+    vol.Optional("code_type"): vol.Any(None, vol.In(CODE_TYPES)),
     vol.Optional("pin"): _text,
     vol.Optional("note"): _text,
     vol.Optional("kind"): _text,

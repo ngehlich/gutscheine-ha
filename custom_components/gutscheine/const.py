@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 DOMAIN = "gutscheine"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 STORAGE_VERSION = 1
 
 SIGNAL_CHANGED = f"{DOMAIN}_changed"

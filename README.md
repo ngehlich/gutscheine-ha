@@ -7,7 +7,7 @@ Gutscheine und Guthabenkarten direkt in Home Assistant verwalten: mit Restwert, 
 ## Funktionen
 
 - **App in der Seitenleiste** („Gutscheine“): Liste nach Ablauf sortiert, Filter nach Besitzer, Anlegen, Bearbeiten, ganz oder teilweise Einlösen, Verlauf der Einlösungen
-- **Barcode** (Code 128) aus der Gutscheinnummer, groß zum Scannen an der Kasse
+- **Barcode (Code 128) oder QR-Code** aus der Gutscheinnummer, groß zum Scannen an der Kasse. Je Gutschein wählbar: automatisch, Barcode, QR-Code oder nur Text
 - **Sensoren**
   - `sensor.gutschein_<geschäft>` je offenem Gutschein: Restwert in €, Attribute mit Status, Ablaufdatum, Tagen bis Ablauf, Besitzer, Code, PIN
   - `sensor.gutscheine_gesamtwert`: Summe aller gültigen Gutscheine, dazu Anzahl und nächster Ablauf

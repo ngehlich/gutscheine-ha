@@ -13,7 +13,10 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, SIGNAL_CHANGED, SOON_DAYS, STORAGE_VERSION
 
-EDITABLE = ("shop", "value", "balance", "expires", "owner", "code", "pin", "note", "kind")
+EDITABLE = (
+    "shop", "value", "balance", "expires", "owner", "code", "code_type", "pin", "note", "kind",
+)
+CODE_TYPES = ("barcode", "qr", "text")
 
 
 def _money(v: Any) -> float | None:
