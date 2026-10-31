@@ -251,6 +251,34 @@ function codeBox(v) {
   return `<div class="codebox ${t}">${img}<div class="codetext">${esc(v.code)}</div></div>`;
 }
 
+/* ---------- Scanner (Kamera live oder Foto) ---------- */
+const SCAN_BASE = "/gutscheine_static/scanner";
+let zxingReady = null;
+function loadZxing(version) {
+  if (!zxingReady)
+    zxingReady = new Promise((resolve, reject) => {
+      if (window.ZXingWASM) return resolve(window.ZXingWASM);
+      const s = document.createElement("script");
+      s.src = `${SCAN_BASE}/zxing-reader.js?v=${version}`;
+      s.onload = () => {
+        window.ZXingWASM.setZXingModuleOverrides({
+          locateFile: (p, prefix) => (p.endsWith(".wasm") ? `${SCAN_BASE}/zxing_reader.wasm?v=${version}` : prefix + p),
+        });
+        resolve(window.ZXingWASM);
+      };
+      s.onerror = () => { zxingReady = null; reject(new Error("Scanner konnte nicht geladen werden")); };
+      document.head.appendChild(s);
+    });
+  return zxingReady;
+}
+async function decodeImage(input, version) {
+  const z = await loadZxing(version);
+  const res = await z.readBarcodes(input, { tryHarder: true, maxNumberOfSymbols: 1 });
+  const hit = res.find((r) => r.isValid && r.text);
+  return hit ? { text: hit.text, type: /QR|Aztec|DataMatrix|PDF417|Maxi/i.test(hit.format) ? "qr" : "barcode" } : null;
+}
+const canLiveScan = () => window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
+
 /* ---------- Helfer ---------- */
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -286,6 +314,8 @@ function expiryText(v) {
   if (d <= SOON) return `noch ${d} ${d === 1 ? "Tag" : "Tage"} (${g}bis ${e})`;
   return `${g}bis ${e}`;
 }
+
+const CAM_ICON = `<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2m8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10m0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/></svg>`;
 
 const STYLE = `
 :host{display:block;min-height:100vh;background:var(--primary-background-color);color:var(--primary-text-color);font-family:var(--paper-font-body1_-_font-family,Roboto,system-ui,sans-serif)}
@@ -336,6 +366,13 @@ form label{display:block;margin:10px 0 0;font-size:13px;color:var(--secondary-te
 form input,form textarea,form select{box-sizing:border-box;width:100%;font:inherit;padding:10px;border-radius:8px;border:1px solid var(--divider-color);background:var(--primary-background-color);color:var(--primary-text-color)}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .hist{font-size:14px;color:var(--secondary-text-color)}
+.codeinput{display:flex;gap:6px;align-items:center}
+.codeinput input{flex:1;min-width:0}
+.scanbtn{border:1px solid var(--divider-color);border-radius:8px;padding:8px}
+.videobox{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:4/3;margin:12px 0}
+.videobox video{width:100%;height:100%;object-fit:cover;display:block}
+.videobox .frame{position:absolute;inset:18% 12%;border:3px solid rgba(255,255,255,.85);border-radius:12px;box-shadow:0 0 0 999px rgba(0,0,0,.25)}
+.scanmsg{color:var(--secondary-text-color);min-height:1.4em}
 .hint{font-size:12px;color:var(--secondary-text-color);margin-top:4px}
 .err{color:var(--error-color,#db4437);margin-top:8px}
 `;
@@ -365,7 +402,7 @@ class GutscheinePanel extends HTMLElement {
 
   async _start() {
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><header></header><main></main>
-      <button class="primary fab" id="add">+ Gutschein</button><dialog></dialog>`;
+      <button class="primary fab" id="add">+ Gutschein</button><dialog class="main"></dialog><dialog class="scan"></dialog>`;
     this._renderHeader();
     this.shadowRoot.getElementById("add").onclick = () => this._edit(null);
     this.shadowRoot.querySelector("main").addEventListener("click", (e) => this._onMainClick(e));
@@ -450,7 +487,7 @@ class GutscheinePanel extends HTMLElement {
   }
 
   _dialog(html) {
-    const d = this.shadowRoot.querySelector("dialog");
+    const d = this.shadowRoot.querySelector("dialog.main");
     d.innerHTML = `<div class="dlg">${html}</div>`;
     if (!d.open) d.showModal();
     d.onclose = () => (this._openId = null);
@@ -458,7 +495,7 @@ class GutscheinePanel extends HTMLElement {
   }
 
   _close() {
-    const d = this.shadowRoot.querySelector("dialog");
+    const d = this.shadowRoot.querySelector("dialog.main");
     this._openId = null;
     if (d.open) d.close();
   }
@@ -466,7 +503,7 @@ class GutscheinePanel extends HTMLElement {
   _detail(id, refresh = false) {
     const v = this.vouchers.find((x) => x.id === id);
     if (!v) return refresh ? this._close() : undefined;
-    const d = this.shadowRoot.querySelector("dialog");
+    const d = this.shadowRoot.querySelector("dialog.main");
     if (refresh && d.querySelector("form")) return; // Bearbeiten nicht überschreiben
     this._openId = id;
     const st = status(v);
@@ -541,23 +578,26 @@ class GutscheinePanel extends HTMLElement {
         <div class="hint">Steht kein Ablaufdatum drauf, nur das Ausstelldatum eintragen: Dann gilt die gesetzliche Frist von 3 Jahren ab Ende des Ausstellungsjahres.</div>
         <label>Besitzer<input name="owner" list="owners" value="${val("owner")}"></label>
         <datalist id="owners">${owners.map((o) => `<option value="${esc(o)}">`).join("")}</datalist>
+        <label>Code / Kartennummer<span class="codeinput"><input name="code" value="${val("code")}" autocomplete="off"><button type="button" class="icon scanbtn" data-a="scan" title="Code scannen" aria-label="Code scannen">${CAM_ICON}</button></span></label>
         <div class="row">
-          <label>Code / Kartennummer<input name="code" value="${val("code")}" autocomplete="off"></label>
           <label>Anzeige als<select name="code_type">
             ${[["", "Automatisch"], ["barcode", "Barcode"], ["qr", "QR-Code"], ["text", "Nur Text"]]
               .map(([k, l]) => `<option value="${k}" ${(v?.code_type || "") === k ? "selected" : ""}>${l}</option>`).join("")}
           </select></label>
-        </div>
-        <div class="row">
           <label>PIN<input name="pin" value="${val("pin")}" autocomplete="off"></label>
-          <label>Art<input name="kind" value="${val("kind")}" placeholder="z. B. Eintrittskarte"></label>
         </div>
+        <label>Art<input name="kind" value="${val("kind")}" placeholder="z. B. Eintrittskarte"></label>
         <label>Notiz<textarea name="note" rows="2">${val("note")}</textarea></label>
         <div class="err"></div>
         <div class="actions"><button type="button" data-a="cancel">Abbrechen</button><button class="primary" type="submit">Speichern</button></div>
       </form>`);
     this._openId = null;
     const form = dlg.querySelector("form");
+    form.querySelector("[data-a=scan]").onclick = () =>
+      this._scan((hit) => {
+        form.elements.code.value = hit.text;
+        form.elements.code_type.value = hit.type;
+      });
     form.querySelector("[data-a=cancel]").onclick = () => (v ? this._detail(v.id) : this._close());
     form.onsubmit = async (e) => {
       e.preventDefault();
@@ -597,5 +637,82 @@ class GutscheinePanel extends HTMLElement {
     };
   }
 }
+
+GutscheinePanel.prototype._scan = function (onHit) {
+  const version = this.panel?.config?.version || "0";
+  const scan = this.shadowRoot.querySelector("dialog.scan");
+  const msg = (t) => (scan.querySelector(".scanmsg").textContent = t);
+  let stream = null, timer = null, done = false;
+  const stop = () => {
+    done = true;
+    clearTimeout(timer);
+    stream?.getTracks().forEach((t) => t.stop());
+    stream = null;
+    if (scan.open) scan.close();
+  };
+  const hit = (h) => { if (done) return; stop(); onHit(h); };
+  scan.innerHTML = `<div class="dlg"><h3>Code scannen</h3>
+    <div class="videobox"><video playsinline muted></video><div class="frame"></div></div>
+    <div class="scanmsg">Kamera wird gestartet …</div>
+    <input type="file" accept="image/*" capture="environment" hidden>
+    <div class="actions"><button type="button" data-a="photo">Foto aufnehmen</button><button type="button" data-a="close">Abbrechen</button></div></div>`;
+  scan.onclose = stop;
+  scan.showModal();
+  const file = scan.querySelector("input[type=file]");
+  scan.querySelector("[data-a=close]").onclick = stop;
+  scan.querySelector("[data-a=photo]").onclick = () => file.click();
+  file.onchange = async () => {
+    if (!file.files[0]) return;
+    msg("Foto wird ausgewertet …");
+    try {
+      const h = await decodeImage(file.files[0], version);
+      h ? hit(h) : msg("Kein Code erkannt. Bitte näher ran und scharf fotografieren.");
+    } catch (e) { msg(e.message); }
+    file.value = "";
+  };
+  const video = scan.querySelector("video");
+  if (!canLiveScan()) {
+    scan.querySelector(".videobox").hidden = true;
+    msg("Live-Scan geht nur über HTTPS. Mach einfach ein Foto vom Code.");
+    loadZxing(version).catch(() => {});
+    return;
+  }
+  (async () => {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } }, audio: false });
+      if (done) return stop();
+      video.srcObject = stream;
+      await video.play();
+      msg("Code ins Bild halten");
+      const native = "BarcodeDetector" in window ? new window.BarcodeDetector() : null;
+      if (!native) await loadZxing(version);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const tick = async () => {
+        if (done) return;
+        try {
+          if (video.videoWidth) {
+            let h = null;
+            if (native) {
+              const r = await native.detect(video);
+              if (r[0]) h = { text: r[0].rawValue, type: /qr|aztec|data_matrix|pdf417/.test(r[0].format) ? "qr" : "barcode" };
+            } else {
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+              ctx.drawImage(video, 0, 0);
+              h = await decodeImage(ctx.getImageData(0, 0, canvas.width, canvas.height), version);
+            }
+            if (h) return hit(h);
+          }
+        } catch (e) { /* nächster Versuch */ }
+        timer = setTimeout(tick, 250);
+      };
+      tick();
+    } catch (e) {
+      scan.querySelector(".videobox").hidden = true;
+      msg("Kamera nicht verfügbar. Mach stattdessen ein Foto vom Code.");
+    }
+  })();
+};
 
 customElements.define("gutscheine-panel", GutscheinePanel);

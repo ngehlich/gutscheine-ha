@@ -12,6 +12,7 @@ Gutscheine und Guthabenkarten direkt in Home Assistant verwalten: mit Restwert, 
   - `sensor.gutschein_<geschäft>` je offenem Gutschein: Restwert in €, Attribute mit Status, Ablaufdatum, Tagen bis Ablauf, Besitzer, Code, PIN
   - `sensor.gutscheine_gesamtwert`: Summe aller gültigen Gutscheine, dazu Anzahl und nächster Ablauf
   - `sensor.gutscheine_laufen_bald_ab`: Anzahl der Gutscheine, die in den nächsten 30 Tagen ablaufen
+- **Scanner:** Beim Eintragen den Code mit der Kamera scannen (live, wenn Home Assistant über HTTPS läuft) oder per Foto. Barcode oder QR-Code wird dabei automatisch erkannt.
 - **Ausstelldatum:** Steht kein Ablaufdatum auf dem Gutschein, gilt die gesetzliche Frist von 3 Jahren ab Ende des Ausstellungsjahres (§§ 195, 199 BGB). Die App, die Sensoren und der Kalender rechnen dann mit diesem Datum.
 - **Kalender** `calendar.gutscheine_ablauf` mit einem Termin am Ablaufdatum jedes Gutscheins
 - **Aktionen** für Automationen und Skripte: `gutscheine.add`, `gutscheine.update`, `gutscheine.redeem`, `gutscheine.remove`, `gutscheine.list`
@@ -67,6 +68,10 @@ actions:
 pip install pytest-homeassistant-custom-component home-assistant-frontend
 pytest
 ```
+
+## Drittsoftware
+
+Der Scanner nutzt [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) 2.2.4 (MIT), lokal mitgeliefert unter `custom_components/gutscheine/scanner/`. Es werden keine Daten an externe Dienste geschickt.
 
 ## Lizenz
 

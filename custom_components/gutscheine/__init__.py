@@ -35,6 +35,8 @@ from .const import (
     PANEL_FILE,
     PANEL_URL,
     REGISTERED,
+    SCANNER_DIR,
+    SCANNER_URL,
     SIGNAL_CHANGED,
     STATIC_URL,
     VERSION,
@@ -236,7 +238,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if not hass.data.get(REGISTERED):
         await hass.http.async_register_static_paths(
-            [StaticPathConfig(STATIC_URL, str(PANEL_FILE), False)]
+            [
+                StaticPathConfig(STATIC_URL, str(PANEL_FILE), False),
+                StaticPathConfig(SCANNER_URL, str(SCANNER_DIR), True),
+            ]
         )
         for cmd in (ws_list, ws_save, ws_redeem, ws_remove, ws_subscribe):
             websocket_api.async_register_command(hass, cmd)
@@ -251,7 +256,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         sidebar_icon="mdi:ticket-percent-outline",
         embed_iframe=False,
         require_admin=False,
-        config={},
+        config={"version": VERSION},
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
