@@ -55,6 +55,7 @@ FIELDS = {
     vol.Optional("value"): _money,
     vol.Optional("balance"): _money,
     vol.Optional("expires"): _date,
+    vol.Optional("issued"): _date,
     vol.Optional("owner"): _text,
     vol.Optional("code"): _text,
     vol.Optional("code_type"): vol.Any(None, vol.In(CODE_TYPES)),

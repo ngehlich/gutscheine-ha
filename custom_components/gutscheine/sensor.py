@@ -12,7 +12,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN, SIGNAL_CHANGED, SOON_DAYS
-from .store import VoucherStore, days_left, status
+from .store import VoucherStore, days_left, effective_expiry, expiry_is_legal, status
 
 CURRENCY = "EUR"
 
@@ -123,7 +123,9 @@ class VoucherSensor(_Base):
             "geschaeft": v.get("shop"),
             "status": status(v),
             "ursprungswert": v.get("value"),
-            "ablaufdatum": v.get("expires"),
+            "ablaufdatum": effective_expiry(v),
+            "ablauf_gesetzlich": expiry_is_legal(v),
+            "ausstelldatum": v.get("issued"),
             "tage_bis_ablauf": days_left(v),
             "besitzer": v.get("owner"),
             "code": v.get("code"),
@@ -154,12 +156,12 @@ class TotalSensor(_Base):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         opened = self.store.open_vouchers()
-        dated = sorted((v for v in opened if v.get("expires")), key=lambda v: v["expires"])
+        dated = sorted((v for v in opened if effective_expiry(v)), key=effective_expiry)
         nxt = dated[0] if dated else None
         return {
             "anzahl": len(opened),
             "ohne_betrag": sum(1 for v in opened if v.get("balance") is None),
-            "naechster_ablauf": nxt["expires"] if nxt else None,
+            "naechster_ablauf": effective_expiry(nxt) if nxt else None,
             "naechster_ablauf_geschaeft": nxt["shop"] if nxt else None,
         }
 
@@ -187,8 +189,8 @@ class SoonSensor(_Base):
         return {
             "tage": SOON_DAYS,
             "gutscheine": [
-                {"geschaeft": v["shop"], "ablaufdatum": v["expires"], "restwert": v.get("balance")}
-                for v in sorted(self._soon(), key=lambda v: v["expires"])
+                {"geschaeft": v["shop"], "ablaufdatum": effective_expiry(v), "restwert": v.get("balance")}
+                for v in sorted(self._soon(), key=effective_expiry)
             ],
         }
 

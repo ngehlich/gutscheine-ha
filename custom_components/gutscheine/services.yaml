@@ -25,6 +25,9 @@ add:
     expires:
       selector:
         date:
+    issued:
+      selector:
+        date:
     owner:
       example: "Nils"
       selector:
@@ -81,6 +84,9 @@ update:
           mode: box
           unit_of_measurement: "€"
     expires:
+      selector:
+        date:
+    issued:
       selector:
         date:
     owner:

@@ -261,7 +261,13 @@ const today = () => {
   const d = new Date();
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 };
-const daysLeft = (v) => (v.expires ? Math.round((new Date(v.expires + "T00:00:00") - today()) / 864e5) : null);
+/* Ohne aufgedrucktes Ablaufdatum: gesetzliche Frist, 3 Jahre ab Ende des Ausstellungsjahres. */
+const legalExpiry = (v) => !v.expires && !!v.issued;
+const effExpiry = (v) => v.expires || (v.issued ? `${+v.issued.slice(0, 4) + 3}-12-31` : null);
+const daysLeft = (v) => {
+  const e = effExpiry(v);
+  return e ? Math.round((new Date(e + "T00:00:00") - today()) / 864e5) : null;
+};
 const SOON = 30;
 function status(v) {
   if (v.redeemed) return "eingeloest";
@@ -272,13 +278,13 @@ function status(v) {
 }
 const STATUS_TEXT = { aktiv: "Gültig", bald: "Läuft bald ab", abgelaufen: "Abgelaufen", eingeloest: "Eingelöst" };
 function expiryText(v) {
-  const d = daysLeft(v);
+  const d = daysLeft(v), e = fmtDate(effExpiry(v)), g = legalExpiry(v) ? "gesetzlich " : "";
   if (d === null) return "kein Ablaufdatum";
-  if (v.redeemed) return `bis ${fmtDate(v.expires)}`;
-  if (d < 0) return `abgelaufen am ${fmtDate(v.expires)}`;
+  if (v.redeemed) return `${g}bis ${e}`;
+  if (d < 0) return `${g}abgelaufen am ${e}`;
   if (d === 0) return "läuft heute ab";
-  if (d <= SOON) return `noch ${d} ${d === 1 ? "Tag" : "Tage"} (${fmtDate(v.expires)})`;
-  return `bis ${fmtDate(v.expires)}`;
+  if (d <= SOON) return `noch ${d} ${d === 1 ? "Tag" : "Tage"} (${g}bis ${e})`;
+  return `${g}bis ${e}`;
 }
 
 const STYLE = `
@@ -330,6 +336,7 @@ form label{display:block;margin:10px 0 0;font-size:13px;color:var(--secondary-te
 form input,form textarea,form select{box-sizing:border-box;width:100%;font:inherit;padding:10px;border-radius:8px;border:1px solid var(--divider-color);background:var(--primary-background-color);color:var(--primary-text-color)}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .hist{font-size:14px;color:var(--secondary-text-color)}
+.hint{font-size:12px;color:var(--secondary-text-color);margin-top:4px}
 .err{color:var(--error-color,#db4437);margin-top:8px}
 `;
 
@@ -401,7 +408,7 @@ class GutscheinePanel extends HTMLElement {
     const total = open.reduce((s, v) => s + (v.balance || 0), 0);
     const soon = list.filter((v) => status(v) === "bald").length;
     const owners = [...new Set(this.vouchers.map((v) => v.owner || "–"))].sort();
-    const byExpiry = (a, b) => (a.expires || "9999").localeCompare(b.expires || "9999") || a.shop.localeCompare(b.shop);
+    const byExpiry = (a, b) => (effExpiry(a) || "9999").localeCompare(effExpiry(b) || "9999") || a.shop.localeCompare(b.shop);
     const group = (st) => list.filter((v) => status(v) === st).sort(byExpiry);
     const old = [...group("abgelaufen"), ...group("eingeloest")];
 
@@ -473,6 +480,8 @@ class GutscheinePanel extends HTMLElement {
       ${v.code ? codeBox(v) : ""}
       <dl>
         ${v.value !== null && v.value !== v.balance ? `<dt>Ursprünglich</dt><dd>${eur(v.value)}</dd>` : ""}
+        ${v.issued ? `<dt>Ausgestellt</dt><dd>${fmtDate(v.issued)}</dd>` : ""}
+        ${legalExpiry(v) ? `<dt>Ablauf</dt><dd>gesetzliche Frist: 3 Jahre ab Ende ${v.issued.slice(0, 4)}</dd>` : ""}
         ${v.pin ? `<dt>PIN</dt><dd>${esc(v.pin)}</dd>` : ""}
         ${v.owner ? `<dt>Besitzer</dt><dd>${esc(v.owner)}</dd>` : ""}
         ${v.kind ? `<dt>Art</dt><dd>${esc(v.kind)}</dd>` : ""}
@@ -527,8 +536,10 @@ class GutscheinePanel extends HTMLElement {
         </div>
         <div class="row">
           <label>Ablaufdatum<input name="expires" type="date" value="${val("expires")}"></label>
-          <label>Besitzer<input name="owner" list="owners" value="${val("owner")}"></label>
+          <label>Ausstelldatum<input name="issued" type="date" value="${val("issued")}"></label>
         </div>
+        <div class="hint">Steht kein Ablaufdatum drauf, nur das Ausstelldatum eintragen: Dann gilt die gesetzliche Frist von 3 Jahren ab Ende des Ausstellungsjahres.</div>
+        <label>Besitzer<input name="owner" list="owners" value="${val("owner")}"></label>
         <datalist id="owners">${owners.map((o) => `<option value="${esc(o)}">`).join("")}</datalist>
         <div class="row">
           <label>Code / Kartennummer<input name="code" value="${val("code")}" autocomplete="off"></label>
@@ -561,6 +572,7 @@ class GutscheinePanel extends HTMLElement {
         value: money("value"),
         balance: money("balance"),
         expires: f.get("expires") || null,
+        issued: f.get("issued") || null,
         owner: f.get("owner") || null,
         code: f.get("code") || null,
         code_type: f.get("code_type") || null,

@@ -12,7 +12,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, SIGNAL_CHANGED
 from .sensor import _device
-from .store import VoucherStore, status
+from .store import VoucherStore, effective_expiry, expiry_is_legal
 
 
 async def async_setup_entry(
@@ -46,10 +46,13 @@ class ExpiryCalendar(CalendarEntity):
     def _events(self) -> list[CalendarEvent]:
         out = []
         for v in self.store.vouchers.values():
-            if not v.get("expires") or v.get("redeemed"):
+            exp = effective_expiry(v)
+            if not exp or v.get("redeemed"):
                 continue
-            day = date.fromisoformat(v["expires"])
+            day = date.fromisoformat(exp)
             desc = [f"Restwert: {_fmt(v.get('balance'))}"]
+            if expiry_is_legal(v):
+                desc.append(f"Gesetzliche Frist (ausgestellt {date.fromisoformat(v['issued']):%d.%m.%Y})")
             if v.get("owner"):
                 desc.append(f"Besitzer: {v['owner']}")
             out.append(

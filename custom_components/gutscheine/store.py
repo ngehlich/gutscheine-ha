@@ -14,7 +14,7 @@ from homeassistant.util import dt as dt_util
 from .const import DOMAIN, SIGNAL_CHANGED, SOON_DAYS, STORAGE_VERSION
 
 EDITABLE = (
-    "shop", "value", "balance", "expires", "owner", "code", "code_type", "pin", "note", "kind",
+    "shop", "value", "balance", "expires", "issued", "owner", "code", "code_type", "pin", "note", "kind",
 )
 CODE_TYPES = ("barcode", "qr", "text")
 
@@ -33,11 +33,30 @@ def _date(v: Any) -> str | None:
     return date.fromisoformat(str(v)[:10]).isoformat()
 
 
+def legal_expiry(issued: str) -> str:
+    """Regelverjährung (§§ 195, 199 BGB): 3 Jahre ab Ende des Ausstellungsjahres."""
+    return date(date.fromisoformat(issued).year + 3, 12, 31).isoformat()
+
+
+def effective_expiry(voucher: dict[str, Any]) -> str | None:
+    """Aufgedrucktes Ablaufdatum, sonst gesetzliche Frist aus dem Ausstelldatum."""
+    if voucher.get("expires"):
+        return voucher["expires"]
+    if voucher.get("issued"):
+        return legal_expiry(voucher["issued"])
+    return None
+
+
+def expiry_is_legal(voucher: dict[str, Any]) -> bool:
+    return not voucher.get("expires") and bool(voucher.get("issued"))
+
+
 def days_left(voucher: dict[str, Any], today: date | None = None) -> int | None:
-    if not voucher.get("expires"):
+    exp = effective_expiry(voucher)
+    if not exp:
         return None
     today = today or dt_util.now().date()
-    return (date.fromisoformat(voucher["expires"]) - today).days
+    return (date.fromisoformat(exp) - today).days
 
 
 def status(voucher: dict[str, Any], today: date | None = None) -> str:
@@ -83,7 +102,7 @@ class VoucherStore:
             val = fields[key]
             if key in ("value", "balance"):
                 val = _money(val)
-            elif key == "expires":
+            elif key in ("expires", "issued"):
                 val = _date(val)
             elif isinstance(val, str):
                 val = val.strip() or None

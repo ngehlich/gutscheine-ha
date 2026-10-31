@@ -30,7 +30,11 @@
         },
         "expires": {
           "name": "Ablaufdatum",
-          "description": "Leer lassen, wenn keins draufsteht."
+          "description": "Aufgedrucktes Ablaufdatum. Leer lassen, wenn keins draufsteht."
+        },
+        "issued": {
+          "name": "Ausstelldatum",
+          "description": "Wann der Gutschein ausgestellt oder gekauft wurde. Ohne Ablaufdatum gilt dann die gesetzliche Frist: 3 Jahre ab Ende des Ausstellungsjahres."
         },
         "owner": {
           "name": "Besitzer",
@@ -80,7 +84,11 @@
         },
         "expires": {
           "name": "Ablaufdatum",
-          "description": "Leer lassen, wenn keins draufsteht."
+          "description": "Aufgedrucktes Ablaufdatum. Leer lassen, wenn keins draufsteht."
+        },
+        "issued": {
+          "name": "Ausstelldatum",
+          "description": "Wann der Gutschein ausgestellt oder gekauft wurde. Ohne Ablaufdatum gilt dann die gesetzliche Frist: 3 Jahre ab Ende des Ausstellungsjahres."
         },
         "owner": {
           "name": "Besitzer",

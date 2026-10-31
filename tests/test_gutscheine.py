@@ -31,7 +31,7 @@ async def test_lifecycle(hass: HomeAssistant, hass_ws_client) -> None:
     soon = (date.today() + timedelta(days=10)).isoformat()
     r = await _call(hass, "add", shop="Media Markt", value=30, code="5303452585670", expires=soon, owner="S+N")
     mm = r["voucher"]
-    await _call(hass, "add", shop="Media Markt", value=15)
+    await _call(hass, "add", shop="Media Markt", value=15, issued="2025-03-01")
     await _call(hass, "add", shop="Bauhaus", value=7, expires="2020-05-20")
     await _call(hass, "add", shop="Conrad", code="https://conrad.de/g/123", code_type="qr")
     await hass.async_block_till_done()
@@ -40,7 +40,10 @@ async def test_lifecycle(hass: HomeAssistant, hass_ws_client) -> None:
     assert float(s.state) == 30
     assert s.attributes["status"] == "bald"
     assert s.attributes["code"] == "5303452585670"
-    assert hass.states.get("sensor.gutschein_media_markt_2").state == "15.0"
+    mm2 = hass.states.get("sensor.gutschein_media_markt_2")
+    assert mm2.state == "15.0"
+    assert mm2.attributes["ablaufdatum"] == "2028-12-31"
+    assert mm2.attributes["ablauf_gesetzlich"] is True
     conrad = hass.states.get("sensor.gutschein_conrad")
     assert conrad.state == "unknown"
     assert conrad.attributes["code_typ"] == "qr"
@@ -96,7 +99,7 @@ async def test_lifecycle(hass: HomeAssistant, hass_ws_client) -> None:
         blocking=True, return_response=True,
     )
     summaries = [e["summary"] for e in events["calendar.gutscheine_ablauf"]["events"]]
-    assert summaries == ["Gutschein Bauhaus läuft ab (7,00 €)"]
+    assert summaries == ["Gutschein Bauhaus läuft ab (7,00 €)", "Gutschein Media Markt läuft ab (15,00 €)"]
 
 
 async def test_reload_keeps_data(hass: HomeAssistant) -> None:
