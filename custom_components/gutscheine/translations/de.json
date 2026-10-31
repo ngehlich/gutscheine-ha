@@ -1,0 +1,140 @@
+{
+  "title": "Gutscheine",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Gutscheine",
+        "description": "Gutscheine in Home Assistant verwalten. Danach erscheint „Gutscheine“ in der Seitenleiste."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Gutscheine ist bereits eingerichtet."
+    }
+  },
+  "services": {
+    "add": {
+      "name": "Gutschein anlegen",
+      "description": "Legt einen neuen Gutschein an.",
+      "fields": {
+        "shop": {
+          "name": "Geschäft",
+          "description": "Wo der Gutschein gilt."
+        },
+        "value": {
+          "name": "Ursprungswert",
+          "description": "Wert beim Kauf in Euro."
+        },
+        "balance": {
+          "name": "Restwert",
+          "description": "Aktuelles Guthaben in Euro. Leer lassen = Ursprungswert."
+        },
+        "expires": {
+          "name": "Ablaufdatum",
+          "description": "Leer lassen, wenn keins draufsteht."
+        },
+        "owner": {
+          "name": "Besitzer",
+          "description": "Wem der Gutschein gehört, z. B. Nils, Sarah oder S+N."
+        },
+        "code": {
+          "name": "Code",
+          "description": "Gutschein- oder Kartennummer; wird in der App als Barcode angezeigt."
+        },
+        "pin": {
+          "name": "PIN",
+          "description": "PIN oder Prüfcode, falls vorhanden."
+        },
+        "kind": {
+          "name": "Art",
+          "description": "Z. B. Gutschein, Guthabenkarte, Eintrittskarte."
+        },
+        "note": {
+          "name": "Notiz",
+          "description": "Freitext, z. B. Bedingungen oder wo der Gutschein liegt."
+        }
+      }
+    },
+    "update": {
+      "name": "Gutschein ändern",
+      "description": "Ändert Angaben eines Gutscheins.",
+      "fields": {
+        "voucher": {
+          "name": "Gutschein",
+          "description": "Sensor des Gutscheins oder seine ID."
+        },
+        "shop": {
+          "name": "Geschäft",
+          "description": "Wo der Gutschein gilt."
+        },
+        "value": {
+          "name": "Ursprungswert",
+          "description": "Wert beim Kauf in Euro."
+        },
+        "balance": {
+          "name": "Restwert",
+          "description": "Aktuelles Guthaben in Euro. Leer lassen = Ursprungswert."
+        },
+        "expires": {
+          "name": "Ablaufdatum",
+          "description": "Leer lassen, wenn keins draufsteht."
+        },
+        "owner": {
+          "name": "Besitzer",
+          "description": "Wem der Gutschein gehört, z. B. Nils, Sarah oder S+N."
+        },
+        "code": {
+          "name": "Code",
+          "description": "Gutschein- oder Kartennummer; wird in der App als Barcode angezeigt."
+        },
+        "pin": {
+          "name": "PIN",
+          "description": "PIN oder Prüfcode, falls vorhanden."
+        },
+        "kind": {
+          "name": "Art",
+          "description": "Z. B. Gutschein, Guthabenkarte, Eintrittskarte."
+        },
+        "note": {
+          "name": "Notiz",
+          "description": "Freitext, z. B. Bedingungen oder wo der Gutschein liegt."
+        },
+        "redeemed": {
+          "name": "Eingelöst",
+          "description": "Als vollständig eingelöst markieren."
+        }
+      }
+    },
+    "redeem": {
+      "name": "Gutschein einlösen",
+      "description": "Löst einen Gutschein ganz oder teilweise ein.",
+      "fields": {
+        "voucher": {
+          "name": "Gutschein",
+          "description": "Sensor des Gutscheins oder seine ID."
+        },
+        "amount": {
+          "name": "Betrag",
+          "description": "Eingelöster Betrag. Leer lassen = komplett einlösen."
+        },
+        "note": {
+          "name": "Notiz",
+          "description": "Z. B. wofür eingelöst."
+        }
+      }
+    },
+    "remove": {
+      "name": "Gutschein löschen",
+      "description": "Löscht einen Gutschein endgültig.",
+      "fields": {
+        "voucher": {
+          "name": "Gutschein",
+          "description": "Sensor des Gutscheins oder seine ID."
+        }
+      }
+    },
+    "list": {
+      "name": "Gutscheine auflisten",
+      "description": "Gibt alle Gutscheine zurück."
+    }
+  }
+}

@@ -1,0 +1,128 @@
+add:
+  fields:
+    shop:
+      required: true
+      example: "Media Markt"
+      selector:
+        text:
+    value:
+      example: 30
+      selector:
+        number:
+          min: 0
+          max: 10000
+          step: 0.01
+          mode: box
+          unit_of_measurement: "€"
+    balance:
+      selector:
+        number:
+          min: 0
+          max: 10000
+          step: 0.01
+          mode: box
+          unit_of_measurement: "€"
+    expires:
+      selector:
+        date:
+    owner:
+      example: "Nils"
+      selector:
+        text:
+    code:
+      selector:
+        text:
+    pin:
+      selector:
+        text:
+    kind:
+      example: "Gutschein"
+      selector:
+        text:
+    note:
+      selector:
+        text:
+          multiline: true
+
+update:
+  fields:
+    voucher:
+      required: true
+      example: "sensor.gutschein_media_markt"
+      selector:
+        entity:
+          integration: gutscheine
+          domain: sensor
+    shop:
+      selector:
+        text:
+    value:
+      selector:
+        number:
+          min: 0
+          max: 10000
+          step: 0.01
+          mode: box
+          unit_of_measurement: "€"
+    balance:
+      selector:
+        number:
+          min: 0
+          max: 10000
+          step: 0.01
+          mode: box
+          unit_of_measurement: "€"
+    expires:
+      selector:
+        date:
+    owner:
+      selector:
+        text:
+    code:
+      selector:
+        text:
+    pin:
+      selector:
+        text:
+    kind:
+      selector:
+        text:
+    note:
+      selector:
+        text:
+          multiline: true
+    redeemed:
+      selector:
+        boolean:
+
+redeem:
+  fields:
+    voucher:
+      required: true
+      example: "sensor.gutschein_media_markt"
+      selector:
+        entity:
+          integration: gutscheine
+          domain: sensor
+    amount:
+      selector:
+        number:
+          min: 0
+          max: 10000
+          step: 0.01
+          mode: box
+          unit_of_measurement: "€"
+    note:
+      selector:
+        text:
+
+remove:
+  fields:
+    voucher:
+      required: true
+      selector:
+        entity:
+          integration: gutscheine
+          domain: sensor
+
+list:
