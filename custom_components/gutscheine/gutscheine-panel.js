@@ -749,4 +749,5 @@ GutscheinePanel.prototype._scan = function (onHit) {
   })();
 };
 
-customElements.define("gutscheine-panel", GutscheinePanel);
+// Nach einem Update kann die alte Version im selben Browser-Tab schon registriert sein.
+if (!customElements.get("gutscheine-panel")) customElements.define("gutscheine-panel", GutscheinePanel);
