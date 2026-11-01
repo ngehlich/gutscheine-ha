@@ -17,7 +17,7 @@ Gutscheine und Guthabenkarten direkt in Home Assistant verwalten: mit Restwert, 
 - **Kalender** `calendar.gutscheine_ablauf` mit einem Termin am Ablaufdatum jedes Gutscheins
 - **Aktionen** für Automationen und Skripte: `gutscheine.add`, `gutscheine.update`, `gutscheine.redeem`, `gutscheine.remove`, `gutscheine.list`
 
-Vollständig eingelöste Gutscheine bleiben in der App unter „Abgelaufen und eingelöst“ sichtbar, ihr Sensor wird entfernt.
+Abgelaufene Gutscheine bleiben in der Liste und sind rot eingefärbt (oft noch einlösbar), bald ablaufende orange. Vollständig eingelöste stehen unter „Eingelöst“, ihr Sensor wird entfernt.
 
 ## Installation über HACS
 

@@ -345,7 +345,10 @@ h2{font-size:14px;font-weight:500;color:var(--secondary-text-color);margin:20px 
 .dot.bald{background:var(--warning-color,#ffa600)}
 .dot.abgelaufen{background:var(--error-color,#db4437)}
 .dot.eingeloest{background:var(--disabled-text-color,#999)}
-.item.abgelaufen,.item.eingeloest{opacity:.65}
+.item.abgelaufen{background:rgba(219,68,55,.12);border-color:rgba(219,68,55,.5)}
+.item.abgelaufen .sub{color:var(--error-color,#db4437)}
+.item.bald{background:rgba(255,166,0,.14);border-color:rgba(255,166,0,.6)}
+.item.eingeloest{opacity:.65}
 .fab{position:fixed;right:20px;bottom:20px;border-radius:16px;padding:16px 20px;box-shadow:0 3px 8px rgba(0,0,0,.3)}
 .empty{text-align:center;color:var(--secondary-text-color);padding:40px 0}
 dialog{border:none;border-radius:16px;padding:0;width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 32px);background:var(--card-background-color);color:var(--primary-text-color)}
@@ -449,7 +452,9 @@ class GutscheinePanel extends HTMLElement {
     const owners = [...new Set(this.vouchers.map((v) => v.owner || "–"))].sort();
     const byExpiry = (a, b) => (effExpiry(a) || "9999").localeCompare(effExpiry(b) || "9999") || a.shop.localeCompare(b.shop);
     const group = (st) => list.filter((v) => status(v) === st).sort(byExpiry);
-    const old = [...group("abgelaufen"), ...group("eingeloest")];
+    const byShop = (a, b) => a.shop.localeCompare(b.shop, "de", { sensitivity: "base" }) || byExpiry(a, b);
+    const current = list.filter((v) => status(v) !== "eingeloest").sort(byShop);
+    const old = group("eingeloest");
 
     const item = (v) => {
       const st = status(v);
@@ -468,9 +473,8 @@ class GutscheinePanel extends HTMLElement {
       </div>
       ${owners.length > 1 ? `<div class="chips">${["alle", ...owners].map((o) => `<button class="chip ${o === this.owner ? "on" : ""}" data-owner="${esc(o)}">${o === "alle" ? "Alle" : o === "–" ? "Ohne Besitzer" : esc(o)}</button>`).join("")}</div>` : ""}
       ${!this.loaded ? "" : list.length === 0 ? '<div class="empty">Noch keine Gutscheine. Unten rechts anlegen.</div>' : ""}
-      ${group("bald").length ? `<h2>Läuft bald ab</h2><div class="list">${group("bald").map(item).join("")}</div>` : ""}
-      ${group("aktiv").length ? `<h2>Gültig</h2><div class="list">${group("aktiv").map(item).join("")}</div>` : ""}
-      ${old.length ? `<h2><button id="toggleOld">${this.showOld ? "▾" : "▸"} Abgelaufen und eingelöst (${old.length})</button></h2>
+      ${current.length ? `<div class="list">${current.map(item).join("")}</div>` : ""}
+      ${old.length ? `<h2><button id="toggleOld">${this.showOld ? "▾" : "▸"} Eingelöst (${old.length})</button></h2>
         ${this.showOld ? `<div class="list">${old.map(item).join("")}</div>` : ""}` : ""}`;
   }
 
