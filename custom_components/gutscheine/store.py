@@ -104,6 +104,9 @@ class VoucherStore:
                 val = _money(val)
             elif key in ("expires", "issued"):
                 val = _date(val)
+            elif key == "code" and isinstance(val, str):
+                # Leerzeichen/Umbrüche aus gedruckten Gruppen entfernen, sonst scannt die Kasse nicht.
+                val = "".join(val.split()) or None
             elif isinstance(val, str):
                 val = val.strip() or None
             out[key] = val

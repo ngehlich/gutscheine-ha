@@ -248,7 +248,7 @@ function codeType(v) {
 function codeBox(v) {
   const t = codeType(v);
   const img = t === "qr" ? qrSvg(v.code) : t === "barcode" ? barcodeSvg(v.code) : "";
-  return `<div class="codebox ${t}">${img}<div class="codetext">${esc(v.code)}</div></div>`;
+  return `<div class="codebox ${t}">${img}<div class="codetext" style="--n:${v.code.length}">${esc(v.code)}</div></div>`;
 }
 
 /* ---------- Scanner (Kamera live oder Foto) ---------- */
@@ -357,9 +357,11 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 .codebox{background:#fff;border-radius:8px;padding:12px;margin:12px 0;text-align:center;color:#000}
 .barcode{width:100%;height:96px;display:block}
 .qrcode{width:min(260px,70vw);height:auto;display:block;margin:0 auto}
-.codebox.text .codetext{font-size:22px;margin:0}
-.codetext{font-family:monospace;font-size:18px;letter-spacing:.08em;margin-top:6px;word-break:break-all}
+.codebox{container-type:inline-size}
+.codetext{font-family:monospace;letter-spacing:.08em;margin-top:6px;white-space:nowrap;overflow-x:auto;font-size:min(18px,calc(100cqi / (var(--n) * .78)))}
+.codebox.text .codetext{font-size:min(24px,calc(100cqi / (var(--n) * .78)));margin:0}
 dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 12px;margin:12px 0}
+.mono{font-family:monospace;font-size:16px;white-space:nowrap}
 dt{color:var(--secondary-text-color)}dd{margin:0;word-break:break-word}
 .actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:16px}
 form label{display:block;margin:10px 0 0;font-size:13px;color:var(--secondary-text-color)}
@@ -519,7 +521,7 @@ class GutscheinePanel extends HTMLElement {
         ${v.value !== null && v.value !== v.balance ? `<dt>Ursprünglich</dt><dd>${eur(v.value)}</dd>` : ""}
         ${v.issued ? `<dt>Ausgestellt</dt><dd>${fmtDate(v.issued)}</dd>` : ""}
         ${legalExpiry(v) ? `<dt>Ablauf</dt><dd>gesetzliche Frist: 3 Jahre ab Ende ${v.issued.slice(0, 4)}</dd>` : ""}
-        ${v.pin ? `<dt>PIN</dt><dd>${esc(v.pin)}</dd>` : ""}
+        ${v.pin ? `<dt>PIN</dt><dd class="mono">${esc(v.pin)}</dd>` : ""}
         ${v.owner ? `<dt>Besitzer</dt><dd>${esc(v.owner)}</dd>` : ""}
         ${v.kind ? `<dt>Art</dt><dd>${esc(v.kind)}</dd>` : ""}
         ${v.note ? `<dt>Notiz</dt><dd>${esc(v.note)}</dd>` : ""}
@@ -614,7 +616,7 @@ class GutscheinePanel extends HTMLElement {
         expires: f.get("expires") || null,
         issued: f.get("issued") || null,
         owner: f.get("owner") || null,
-        code: f.get("code") || null,
+        code: String(f.get("code") || "").replace(/\s+/g, "") || null,
         code_type: f.get("code_type") || null,
         pin: f.get("pin") || null,
         kind: f.get("kind") || null,
