@@ -326,7 +326,9 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:var(--prima
 button.icon{padding:8px;display:inline-flex}
 button.primary{background:var(--primary-color);color:var(--text-primary-color,#fff)}
 button.danger{color:var(--error-color,#db4437)}
-main{max-width:720px;margin:0 auto;padding:16px 16px 96px}
+main{max-width:720px;margin:0 auto;padding:8px 16px 96px}
+.search{max-width:720px;margin:0 auto;padding:12px 16px 0;box-sizing:border-box}
+.search input{box-sizing:border-box;width:100%;font:inherit;padding:10px 14px;border-radius:24px;border:1px solid var(--divider-color);background:var(--card-background-color);color:var(--primary-text-color)}
 .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
 .tile{background:var(--card-background-color);border-radius:12px;padding:12px;box-shadow:var(--ha-card-box-shadow,none);border:1px solid var(--divider-color)}
 .tile b{display:block;font-size:20px;font-weight:500}
@@ -388,6 +390,7 @@ class GutscheinePanel extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.vouchers = [];
     this.owner = "alle";
+    this.query = "";
     this.showOld = false;
     this.loaded = false;
   }
@@ -406,10 +409,14 @@ class GutscheinePanel extends HTMLElement {
   }
 
   async _start() {
-    this.shadowRoot.innerHTML = `<style>${STYLE}</style><header></header><main></main>
+    this.shadowRoot.innerHTML = `<style>${STYLE}</style><header></header><div class="search"><input type="search" placeholder="Suchen: Geschäft, Code, Besitzer, Notiz …" aria-label="Suchen" autocomplete="off"></div><main></main>
       <button class="primary fab" id="add">+ Gutschein</button><dialog class="main"></dialog><dialog class="scan"></dialog>`;
     this._renderHeader();
     this.shadowRoot.getElementById("add").onclick = () => this._edit(null);
+    this.shadowRoot.querySelector(".search input").addEventListener("input", (e) => {
+      this.query = e.target.value;
+      this._render();
+    });
     this.shadowRoot.querySelector("main").addEventListener("click", (e) => this._onMainClick(e));
     await this._load();
     this._unsub = await this.hass.connection.subscribeMessage(() => this._load(), { type: "gutscheine/subscribe" });
@@ -440,7 +447,16 @@ class GutscheinePanel extends HTMLElement {
   }
 
   _filtered() {
-    return this.vouchers.filter((v) => this.owner === "alle" || (v.owner || "–") === this.owner);
+    const words = this.query.toLowerCase().split(/\s+/).filter(Boolean);
+    return this.vouchers.filter((v) => {
+      if (this.owner !== "alle" && (v.owner || "–") !== this.owner) return false;
+      if (!words.length) return true;
+      const hay = [v.shop, v.owner, v.kind, v.note, v.code, v.pin, v.value, v.balance]
+        .filter((x) => x !== null && x !== undefined)
+        .join(" ")
+        .toLowerCase();
+      return words.every((w) => hay.includes(w));
+    });
   }
 
   _render() {
@@ -472,10 +488,10 @@ class GutscheinePanel extends HTMLElement {
         <div class="tile"><b>${soon}</b><span>laufen bald ab</span></div>
       </div>
       ${owners.length > 1 ? `<div class="chips">${["alle", ...owners].map((o) => `<button class="chip ${o === this.owner ? "on" : ""}" data-owner="${esc(o)}">${o === "alle" ? "Alle" : o === "–" ? "Ohne Besitzer" : esc(o)}</button>`).join("")}</div>` : ""}
-      ${!this.loaded ? "" : list.length === 0 ? '<div class="empty">Noch keine Gutscheine. Unten rechts anlegen.</div>' : ""}
+      ${!this.loaded ? "" : list.length === 0 ? (this.query ? '<div class="empty">Nichts gefunden.</div>' : '<div class="empty">Noch keine Gutscheine. Unten rechts anlegen.</div>') : ""}
       ${current.length ? `<div class="list">${current.map(item).join("")}</div>` : ""}
       ${old.length ? `<h2><button id="toggleOld">${this.showOld ? "▾" : "▸"} Eingelöst (${old.length})</button></h2>
-        ${this.showOld ? `<div class="list">${old.map(item).join("")}</div>` : ""}` : ""}`;
+        ${this.showOld || this.query ? `<div class="list">${old.map(item).join("")}</div>` : ""}` : ""}`;
   }
 
   _onMainClick(e) {
