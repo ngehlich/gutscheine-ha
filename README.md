@@ -25,6 +25,19 @@ Abgelaufene Gutscheine bleiben in der Liste und sind rot eingefärbt (oft noch e
 2. „Gutscheine“ herunterladen und Home Assistant neu starten
 3. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Gutscheine*
 
+## Aus einem Dashboard öffnen
+
+Mit `?back=` zeigt die App oben einen Zurück-Pfeil statt des Menüs:
+
+```yaml
+type: button
+name: Gutscheine
+icon: mdi:ticket-percent-outline
+tap_action:
+  action: navigate
+  navigation_path: /gutscheine?back=/lovelace/0
+```
+
 ## Beispiele
 
 Gutschein anlegen:

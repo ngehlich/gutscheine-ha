@@ -433,9 +433,21 @@ class GutscheinePanel extends HTMLElement {
   _renderHeader() {
     const h = this.shadowRoot.querySelector("header");
     if (!h) return;
-    h.innerHTML = `${this._narrow ? '<button class="icon" id="menu" aria-label="Menü">☰</button>' : ""}<h1>Gutscheine</h1>`;
+    // Zurück-Pfeil, wenn die App aus einem Dashboard geöffnet wurde (?back=/pfad), sonst Menü.
+    const back = new URLSearchParams(location.search).get("back");
+    this._back = back && back.startsWith("/") && !back.startsWith("//") ? back : null;
+    const left = this._back
+      ? '<button class="icon" id="back" aria-label="Zurück"><svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg></button>'
+      : this._narrow ? '<button class="icon" id="menu" aria-label="Menü">☰</button>' : "";
+    h.innerHTML = `${left}<h1>Gutscheine</h1>`;
     const m = h.querySelector("#menu");
     if (m) m.onclick = () => this.dispatchEvent(new Event("hass-toggle-menu", { bubbles: true, composed: true }));
+    const bk = h.querySelector("#back");
+    if (bk)
+      bk.onclick = () => {
+        history.pushState(null, "", this._back);
+        window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
+      };
   }
 
   async _load() {
